@@ -8,7 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import re
 import config
 
+#Load environment variables
 load_dotenv()
+
+#Load app
 app = FastAPI()
 
 #CORS setup (cross-origin thingies)
