@@ -140,8 +140,8 @@ def add_rss_sub(rss_name: str, username: str, request: Request, client: MongoCli
   #Find the RSS feed in our master collection
 
 
-  #If valid, add to our user's RSS subscriptions
+  #If valid, push to our user's RSS subscriptions
 
 
-  
+
   return None
