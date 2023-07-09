@@ -5,8 +5,8 @@ from pymongo.server_api import ServerApi
 import uvicorn
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-import re
 import config
+from .api_utils import url_is_valid
 
 #Load environment variables
 load_dotenv()
@@ -106,20 +106,8 @@ def get_user(username: str, request: Request, client: MongoClient = Depends(get_
 @app.post('/add-rss-feed')
 @auth_required_sync
 def add_rss(rss_name: str, rss_url: str, request: Request, client: MongoClient = Depends(get_db_client)):
-
-  #Validate URL first...
-  regex = re.compile(
-        r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-        r'localhost|' #localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-  
-  is_valid = re.match(regex, rss_url) is not None
-
   #If URL is not valid, raise an error...
-  if not is_valid:
+  if not url_is_valid(rss_url):
     raise HTTPException(status_code=404, detail='URL not valid')
 
   #Try finding the RSS Feed URL
@@ -144,7 +132,5 @@ def add_rss_sub(rss_name: str, username: str, request: Request, client: MongoCli
 
 
   #If valid, push to our user's RSS subscriptions
-
-
 
   return None
