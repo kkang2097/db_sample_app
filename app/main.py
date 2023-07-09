@@ -134,3 +134,10 @@ def add_rss_sub(rss_name: str, username: str, request: Request, client: MongoCli
   #If valid, push to our user's RSS subscriptions
 
   return None
+
+#Dummy function for scheduled RSS master collection reset
+def dummy_scheduled_job(request: Request):
+  #If we finish, we can return True
+
+  #Else, we can return False
+  return None
