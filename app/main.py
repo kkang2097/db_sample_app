@@ -133,11 +133,16 @@ def add_rss_sub(rss_name: str, username: str, request: Request, client: MongoCli
 
   #If valid, push to our user's RSS subscriptions
 
+
   return None
 
 #Dummy function for scheduled RSS master collection reset
+#TODO: Turn this into a DAG, deploy a Docker container
 def dummy_scheduled_job(request: Request):
   #If we finish, we can return True
-
   #Else, we can return False
+
+  #Collect and parse all RSS feeds, put in master collection for posts
+
+  #Grab the master RSS post collection, put into each individual collection
   return None
