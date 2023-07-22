@@ -186,16 +186,8 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
           'published': published,
           'description': description
         }))
-        #If we have 100 articles, bulk write to DB
-        if(len(bulk_list) > 99):
-          #TODO: Code this...
-          pass
-        else:
-          pass
-
         break
-      print("passed")
-      # print(fulltext)
+      #It's a good idea to place a breakpoint here for debugging
       break
   except BaseException as inst:
     print("Oh no, /data_scheduled JOB FAILED.")
