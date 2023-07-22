@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException
 from functools import wraps, lru_cache
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from pymongo import InsertOne
 import uvicorn
 from dotenv import load_dotenv
 import urllib.robotparser as urp
@@ -153,13 +154,15 @@ def add_rss_sub(rss_name: str, username: str, request: Request, client: MongoCli
 #TODO: Turn this into a DAG, deploy a Docker container
 @app.get('/data_scheduled')
 @auth_required_sync
-def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_client)):
+def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_client), req_session = Depends(get_req_session)):
   #If we finish, we can return True
   #Else, we can return False
 
   #Collect and parse all RSS feeds, put in master collection for posts
 
   #Grab the master RSS post collection, put into each individual collection
+  bulk_list=[]
+
   try:
     user_coll = client['data']['rss_feeds']
     posts_coll = client['data']['posts']
@@ -167,17 +170,34 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
     #Get all feeds
     for f in all_feeds:
       feed_url=f['_id']
-      articles = get_articles(feed_url)
+      articles = get_articles(feed_url, req_session)
       #Get all articles in 1 feed
       for a in articles:
         title = a.find('title').text
         link = a.find('link').text
         published = a.find('pubDate').text
         description = a.find('description').text
-        #TODO: Add article to MongoDB
-        # outcome = posts_coll.insert_one()
+        #TODO: Get fulltext of each article
+        print("right before fulltext")
+        fulltext = get_fulltext(link, req_session)
+        print("right after fulltext")
         #TODO: Bulk add articles to MongoDB
+        bulk_list.append(InsertOne({
+          '_id': title,
+          'link': link,
+          'published': published,
+          'description': description
+        }))
+        #If we have 100 articles, bulk write to DB
+        if(len(bulk_list) > 99):
+          #TODO: Code this...
+          pass
+        else:
+          pass
+
         break
+      print("passed")
+      print(fulltext)
       break
   except BaseException as inst:
     print("Oh no, /data_scheduled JOB FAILED.")
