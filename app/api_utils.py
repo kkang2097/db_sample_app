@@ -39,25 +39,16 @@ def get_articles(feed: str, req):
 
 def get_fulltext(url: str, req):
     header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-    print(url)
     res = req.get(url, headers=header)
-    soup = BeautifulSoup(res.content, features='xml')
-    print("got soup")
-    article = None
+    soup = BeautifulSoup(res.content, features='lxml')
     try:
         article = soup.find('article')
     except TypeError:
         print("Couldn't find article for: " + url)
         return None
 
-    print("looking for body")
-    #TODO: Debug this part, that's all we need!
+    #Super compact way to process/concatenate all paragraphs
     body = article.findAll('p')
-    print(body)
-    # fulltext = []
-    # for idx, p in enumerate(body):
-    #     #Smaller paragraphs are usually acknowledgements, etc.
-    #     if(sys.getsizeof(p.text) > 120):
-    #         fulltext.append(p.text)
-    # '\n'.join(fulltext)
-    return None
+    body = list(map(lambda p: p.text, body))
+    body = '\n'.join(body)
+    return body
