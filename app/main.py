@@ -178,9 +178,7 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
         published = a.find('pubDate').text
         description = a.find('description').text
         #TODO: Get fulltext of each article
-        print("right before fulltext")
         fulltext = get_fulltext(link, req_session)
-        print("right after fulltext")
         #TODO: Bulk add articles to MongoDB
         bulk_list.append(InsertOne({
           '_id': title,
@@ -197,7 +195,7 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
 
         break
       print("passed")
-      print(fulltext)
+      # print(fulltext)
       break
   except BaseException as inst:
     print("Oh no, /data_scheduled JOB FAILED.")
