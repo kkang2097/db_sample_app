@@ -2,9 +2,9 @@ import re
 from urllib.parse import urlsplit
 import urllib.robotparser as urp
 from bs4 import BeautifulSoup
+import lxml
 import cchardet
-import requests as req
-
+import sys
 
 #RULES: No object instantiation in this file, too expensive
 
@@ -30,9 +30,34 @@ def can_scrape(url: str, rp):
     rp.read()
     return rp.can_fetch("*", url)
 
-def get_articles(feed: str):
+def get_articles(feed: str, req):
     header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
     res = req.get(feed, headers=header)
-    soup = BeautifulSoup(res.content, features='lxml')
+    soup = BeautifulSoup(res.content, features='xml')
     articles = soup.findAll('item')
     return articles
+
+def get_fulltext(url: str, req):
+    header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    print(url)
+    res = req.get(url, headers=header)
+    soup = BeautifulSoup(res.content, features='xml')
+    print("got soup")
+    article = None
+    try:
+        article = soup.find('article')
+    except TypeError:
+        print("Couldn't find article for: " + url)
+        return None
+
+    print("looking for body")
+    #TODO: Debug this part, that's all we need!
+    body = article.findAll('p')
+    print(body)
+    # fulltext = []
+    # for idx, p in enumerate(body):
+    #     #Smaller paragraphs are usually acknowledgements, etc.
+    #     if(sys.getsizeof(p.text) > 120):
+    #         fulltext.append(p.text)
+    # '\n'.join(fulltext)
+    return None
