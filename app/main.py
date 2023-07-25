@@ -162,7 +162,6 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
 
   #Grab the master RSS post collection, put into each individual collection
   bulk_list=[]
-
   try:
     user_coll = client['data']['rss_feeds']
     posts_coll = client['data']['posts']
