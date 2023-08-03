@@ -3,6 +3,7 @@ from functools import wraps, lru_cache
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import InsertOne
+import pymilvus as pm
 import uvicorn
 from dotenv import load_dotenv
 import urllib.robotparser as urp
@@ -21,7 +22,7 @@ app = FastAPI()
 #CORS setup (cross-origin thingies)
 origins = [
     "http://localhost:8000",
-    "http://localhost:54957",
+    "*",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +37,10 @@ app.add_middleware(
 def get_db_client():
   #Connect to mongodb client
   return MongoClient(config.MONGO_URI)
+
+@lru_cache()
+def get_vdb_client():
+  return pm.connections.connect(uri=config.ZILLIZ_URI, token=config.ZILLIZ_KEY)
 
 @lru_cache()
 def get_req_session():
@@ -92,13 +97,14 @@ async def check_db(request: Request, client: MongoClient = Depends(get_db_client
 
 #Get user
 #This should actually be a POST request
-@app.post('/getuser')
+@app.get('/getuser')
 @auth_required_sync
 def get_user(username: str, request: Request, client: MongoClient = Depends(get_db_client)):
   #Input:
   # Username - String
   #Output:
   # Success (hopefully)
+  print(username)
 
   user_coll = client['data']['users']
   outcome = user_coll.find_one({'_id': username})
@@ -107,8 +113,8 @@ def get_user(username: str, request: Request, client: MongoClient = Depends(get_
   if(outcome == None):
     outcome = user_coll.insert_one({'_id': username,
                                     'subs': {'dummy_sub1': 'dummy_desc', 'dummy_sub2': 'dummy_desc'},
-                                    'feed': {'dummy_post': 'dummy_body', 'dummy_post2': 'dummy_body2'},
-                                    'curated': {'dummy_post': 'dummy_body', 'dummy_post2': 'dummy_body2'}})
+                                    'feed': {'dummy_sub1': 'dummy_desc', 'dummy_sub2': 'dummy_desc'},
+                                    'curated': {'dummy_sub1': 'dummy_desc', 'dummy_sub2': 'dummy_desc'}})
     outcome = user_coll.find_one({'_id': username})
     return outcome
   else:
@@ -183,11 +189,10 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
           '_id': title,
           'link': link,
           'published': published,
-          'description': description
+          'description': description,
+          'fulltext': fulltext
         }))
-        break
       #It's a good idea to place a breakpoint here for debugging
-      break
   except BaseException as inst:
     print("Oh no, /data_scheduled JOB FAILED.")
   return True
@@ -196,7 +201,8 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
 @app.get('/label_scheduled')
 @auth_required_sync
 def embedding_labels(request: Request, client: MongoClient = Depends(get_db_client)):
-
   #Label each post in DB
+  posts_coll = client['data']['posts']
+
 
   return
