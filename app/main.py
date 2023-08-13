@@ -3,7 +3,7 @@ from functools import wraps, lru_cache
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import InsertOne
-import pymilvus as pm
+import openai
 import uvicorn
 from dotenv import load_dotenv
 import urllib.robotparser as urp
@@ -15,6 +15,9 @@ from datetime import datetime as dt
 
 #Load environment variables
 load_dotenv()
+
+#Load OpenAI key
+openai.api_key = config.OPENAI_KEY
 
 #Load app
 app = FastAPI()
@@ -37,10 +40,6 @@ app.add_middleware(
 def get_db_client():
   #Connect to mongodb client
   return MongoClient(config.MONGO_URI)
-
-@lru_cache()
-def get_vdb_client():
-  return pm.connections.connect(uri=config.ZILLIZ_URI, token=config.ZILLIZ_KEY)
 
 @lru_cache()
 def get_req_session():
@@ -184,13 +183,21 @@ def dummy_scheduled_job(request: Request, client: MongoClient = Depends(get_db_c
         description = a.find('description').text
         #TODO: Get fulltext of each article
         fulltext = get_fulltext(link, req_session)
+        embedding=None
+        #Try to get embedding
+        try:
+          embedding = openai.Embedding.create(input=fulltext, model="text-embedding-ada-002")['data'][0]['embedding']
+        except:
+          pass
+
         #TODO: Bulk add articles to MongoDB
         bulk_list.append(InsertOne({
           '_id': title,
           'link': link,
           'published': published,
           'description': description,
-          'fulltext': fulltext
+          'fulltext': fulltext,
+          'embedding': embedding
         }))
       #It's a good idea to place a breakpoint here for debugging
   except BaseException as inst:
